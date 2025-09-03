@@ -110,6 +110,7 @@
       texlive.combined.scheme-full	# LaTeX
 
       python3	# Python
+      python312Packages.tkinter # Python packages
     ];
   };
 
