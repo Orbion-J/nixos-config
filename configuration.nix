@@ -48,11 +48,14 @@
     displayManager.lightdm.greeters.mini = { 
       enable = true;
       user = "robin";
-      extraConfig = ''
-        [greeter]
-	show-password-label = false
-	[greeter-theme]
-	background-image = "/home/robin/Images/ours_blanc_dodo_ourson.jpg"
+      extraConfig = ''[greeter]
+        show-password-label = false
+        password-alignment = center
+        show-sys-info = true
+        [greeter-theme]
+        background-image = "/etc/lightdm/background.jpg"
+        window-color = "#000000"
+        sys-info-margin = -5px -5px 0px
       '';
     };
 
@@ -109,8 +112,7 @@
       typst	# Typst
       texlive.combined.scheme-full	# LaTeX
 
-      python3	# Python
-      python312Packages.tkinter # Python packages
+      python3Full	# Python
     ];
   };
 
