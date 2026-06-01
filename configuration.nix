@@ -10,6 +10,8 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./local/configuration.nix
+      # <home-manager/nixos>
     ];
 
   # Automatic upgrade (via channel)
@@ -21,7 +23,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "lama-e121"; # Define your hostname.
+  # networking.hostName = "lama-e121"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
@@ -41,37 +43,48 @@
      useXkbConfig = true; # use xkb.options in tty.
   };
 
+  
+  i18n.inputMethod = {
+    enable = true;
+    type = "fcitx5";
+    fcitx5 = {
+    	addons = with pkgs; [
+      	# fcitx5-mozc
+      	# fcitx5-gtk
+    	];
+	quickPhrase = {
+		bla = "";
+	};
+    };
+  };
+
   # Enable the X11 windowing system.
   services.xserver = {
     enable = true;
 
-    displayManager.lightdm.greeters.mini = { 
-      enable = true;
-      user = "robin";
-      extraConfig = ''[greeter]
-        show-password-label = false
-        password-alignment = center
-        show-sys-info = true
-        [greeter-theme]
-        background-image = "/etc/lightdm/background.jpg"
-        window-color = "#000000"
-        sys-info-margin = -5px -5px 0px
-      '';
+    displayManager.lightdm.greeters.gtk = {
+    	enable = true;
+	indicators = [ "~host" "~space" "~clock" "~language" "~power" ];
+	extraConfig =
+	''
+	[greeter]
+	background=/etc/lightdm/background.jpg
+	active-monitor=0
+	'';
     };
 
     windowManager.i3.enable = true;
 
     # Configure keymap in X11
     xkb.layout = "fr";
-    # services.xserver.xkb.options = "eurosign:e,caps:escape";
+    xkb.options = "compose:menu";
+    # xkb.options = "eurosign:e,caps:escape";
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
   services.libinput.enable = true;
 
   services.picom.enable = true;
-
-
 
 
   # Enable CUPS to print documents.
@@ -87,6 +100,10 @@
     pulse.enable = true;
   };
 
+  # ClamAV antivirus
+  services.clamav.daemon.enable = true;
+  services.clamav.updater.enable = true;
+
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.robin = {
@@ -94,48 +111,78 @@
     extraGroups = [
       "wheel" # Enable ‘sudo’ for the user.
       "audio"
+      "video"
       "networkmanager"
     ];
     packages = with pkgs; [
-      tree
       firefox	# browser
+      chromium	# browser
       zathura	# pdf viewer
+      evince	# pdf viewer
       nomacs	# image viewer
       vlc	# video viewer
       rclone	# cloud
       lazygit	# gitutils
       libreoffice	# bureautique
+      gimp	# image manipulation
       pulseaudio	# sound management
       pavucontrol	# sound management
+      xclip	# for clipboard in console (eg neovim)
+      wine64	# windows emulation
       
       zotero	# bibliography
       typst	# Typst
+      tinymist	# Typst lsp
       texlive.combined.scheme-full	# LaTeX
 
-      python3Full	# Python
+      python312	# Python
+      coq	# Rocq
+      # rocq-core	# Rocq
+      rocqPackages.vsrocq-language-server
+      vscodium	# editor for Rocq
+
     ];
   };
 
-
-  # programs.firefox.enable = true;
+  # users.users.admin-lama = {
+  #   isNormalUser = true;
+  #   createHome = false;
+  #   extraGroups = [ "wheel" "networkmanager" ];
+  # };
 
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
   environment.systemPackages = with pkgs; [
-     # editors
+     # Editors
      vim
      neovim
-     # utils
+     # Utils
      wget
      htop
      killall
      git
-     # environment
+     unzip
+     tree
+     gnumake
+     gcc
+     rocmPackages.llvm.clang-unwrapped	# clang utilities (including c formatter)
+     stylua	# lua formatter
+     file
+     man-pages
+     man-pages-posix
+     # Environment
      kitty	# terminal
      polybarFull	# bar
      nitrogen	# wallpaper
      flameshot	# snapshot
-     arandr
+     arandr	# multi screen
+     fastfetch	# display system info
+     # Misc
+     clamav	# antivirus
+  ];
+
+  fonts.packages = with pkgs; [
+    ibm-plex
   ];
 
   environment.variables = {
@@ -144,6 +191,22 @@
     BROWSER = "firefox";
     TERMINAL = "kitty";
   };
+
+  environment.shellAliases = { 
+    n = "nvim";
+    g = "lazygit";
+    z = "zathura";
+    k = "kitty &";
+    icat = "kitty +icat";
+  };
+
+  programs.bash.promptInit = 
+  ''
+    # Provide a nice prompt
+    PROMPT_COLOR="1;31m"
+    ((UID)) && PROMPT_COLOR="1;32m"
+    PS1="\n\[\033[$PROMPT_COLOR\]\u@\h \w \\$\[\033[0m\] "
+  '';
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -168,25 +231,6 @@
   # (/run/current-system/configuration.nix). This is useful in case you
   # accidentally delete configuration.nix.
   # system.copySystemConfiguration = true;
-
-  # This option defines the first version of NixOS you have installed on this particular machine,
-  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
-  # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
-  # to actually do that.
-  #
-  # This value being lower than the current NixOS release does NOT mean your system is
-  # out of date, out of support, or vulnerable.
-  #
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "25.05"; # Did you read the comment?
 
 }
 
