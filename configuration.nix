@@ -133,9 +133,10 @@
       zotero	# bibliography
       typst	# Typst
       tinymist	# Typst lsp
-      texlive.combined.scheme-full	# LaTeX
+      typstyle	# Typst formatter
+      texliveFull	# LaTeX
 
-      python312	# Python
+      python3	# Python
       coq	# Rocq
       # rocq-core	# Rocq
       rocqPackages.vsrocq-language-server
