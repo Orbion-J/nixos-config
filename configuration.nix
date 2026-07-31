@@ -7,6 +7,8 @@
 {
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  nixpkgs.overlays = [ (import ./overlays/texlive-minted.nix) ];
+
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
